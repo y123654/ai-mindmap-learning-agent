@@ -1,0 +1,196 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.4.13</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>com.example</groupId>
+  <artifactId>aimindmap-backend</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>aimindmap-backend</name>
+  <description>AI Mindmap Learning System Backend</description>
+
+  <properties>
+    <java.version>21</java.version>
+    <spring-ai.version>1.0.0</spring-ai.version>
+    <!-- 默认门禁排除 eval 组（见下 build/plugins/surefire）；-Peval 会覆盖成"不排除任何组"。 -->
+    <surefire.excludedGroups>eval</surefire.excludedGroups>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.ai</groupId>
+        <artifactId>spring-ai-bom</artifactId>
+        <version>${spring-ai.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-starter-model-openai</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.qdrant</groupId>
+      <artifactId>client</artifactId>
+      <version>1.19.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-amqp</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis</artifactId>
+    </dependency>
+    <!-- 阶段八-1（2026-10-22 项目所有者报备批准，方案 §3.4 第 119 行）：可观测依赖，仅此两个；
+         版本一律由 spring-boot-starter-parent 3.4.13 的 BOM 管理，不写版本号。
+         actuator 提供 /actuator/health 与指标端点，micrometer-registry-prometheus 提供
+         Prometheus 文本格式导出；JVM/GC/线程/HTTP 指标由 micrometer 自动装配，无需手工埋点。 -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-api</artifactId>
+      <version>0.12.6</version>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-impl</artifactId>
+      <version>0.12.6</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-jackson</artifactId>
+      <version>0.12.6</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.commonmark</groupId>
+      <artifactId>commonmark</artifactId>
+      <version>0.22.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.commonmark</groupId>
+      <artifactId>commonmark-ext-gfm-tables</artifactId>
+      <version>0.22.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-database-postgresql</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.pdfbox</groupId>
+      <artifactId>pdfbox</artifactId>
+      <version>3.0.3</version>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- 阶段四 4-4（H1-6）：Testcontainers 只用于 MQ 集成测试，test 作用域；
+         版本由 spring-boot-starter-parent 3.4.13 的 BOM 统一管理，不写死版本号。
+         未引入 testcontainers:postgresql（PG 沿用本机 5432）。 -->
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>rabbitmq</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+      <!-- P0-A1（方案 P0-4）：评测用例一律打 @Tag("eval")，默认门禁必须排除它们，
+           否则 mvn test 会真调大模型、拖慢并污染 727 条基线的口径。
+           跑评测用 -Peval（见下方 profile），不要把 eval 混进默认全量。
+
+           为什么用属性 ${surefire.excludedGroups} 而不是把 eval 写死：
+           profile 里写 <excludedGroups></excludedGroups>（空元素）会被 Maven 的模型合并
+           当成"未设置"丢掉，结果 -Peval 仍然继承了 build 里的 eval 排除项，
+           实测出现 "Tests run: 0"。用属性间接一层，profile 覆盖属性就一定能生效。 -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludedGroups>${surefire.excludedGroups}</excludedGroups>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <!-- 评测专用 profile：只跑 @Tag("eval")，并让排除项失效（方案 P0-4：只加 groups 仍可能被排除）。
+         用法：mvn.cmd -f mindmap-backend/pom.xml -B -Peval test -Dtest=AgentEvalIT '-Djdk.net.unixdomain.tmpdir=D:\tmp' -->
+    <profile>
+      <id>eval</id>
+      <properties>
+        <!-- 语义等价于"空的 excludedGroups"：本仓库没有任何 @Tag 叫这个名字，等于不排除任何组。
+             之所以不用空字符串，同样是因为空元素/空值会被合并逻辑吞掉。 -->
+        <surefire.excludedGroups>__no_such_test_group__</surefire.excludedGroups>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <groups>eval</groups>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

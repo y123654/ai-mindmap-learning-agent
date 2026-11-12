@@ -1,0 +1,21 @@
+CREATE TABLE documents (
+    id BIGSERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL DEFAULT '',
+    content_version INTEGER NOT NULL DEFAULT 1,
+    source_type VARCHAR(32) NOT NULL DEFAULT 'markdown',
+    status VARCHAR(32) NOT NULL DEFAULT 'active',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE mindmaps (
+    id BIGSERIAL PRIMARY KEY,
+    document_id BIGINT NOT NULL UNIQUE REFERENCES documents(id),
+    graph JSONB NOT NULL,
+    graph_version INTEGER NOT NULL DEFAULT 1,
+    sync_status VARCHAR(32) NOT NULL DEFAULT 'idle',
+    last_published_job_id BIGINT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

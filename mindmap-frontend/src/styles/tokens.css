@@ -1,0 +1,317 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   lieflat-ui · tokens.css
+   界面设计系统的唯一正本。所有颜色、字号、间距、圆角、动效从这里取。
+
+   · 原创实现。设计参数与方法参考 lieflat-charts（作者：躺在废墟里，
+     PolyForm Noncommercial 1.0.0），未复制其源代码。
+   · 用法：整段复制进项目（如 src/styles/tokens.css），在入口 CSS 第一行
+     @import "./tokens.css"; 然后在任何地方用 var(--…)。
+   · 改视觉时优先改变量，不要在组件里写新的 hex。
+
+   对比度实测（WCAG 2.1，2026-10-29 用脚本算过）：
+     --text        on --bg      14.83:1   ✓ 正文
+     --text-muted  on --bg       4.79:1   ✓ 次级正文（刚过 4.5）
+     --text-faint  on --bg       2.86:1   ✗ 仅用于非文本/禁用态，不做正文
+     --text        on --surface 15.78:1   ✓
+     --text-muted  on --surface  5.09:1   ✓
+     porcelain #334EAC on #F7F2EB 6.67:1  ✓
+     wire      #F5572F on #F0F0EE 2.93:1  ✗ 橙只做填充；做文字用 --accent-text
+     palm      #D4A017 on #F0EFEB 2.06:1  ✗ 琥珀只做填充；做文字用 --accent-text
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── 1 · 字体 ───────────────────────────────────────────────────────
+     Inter 负责拉丁字母和数字（数字更紧致），中文回退到系统黑体。
+     不引在线字体也能跑；要更好看就自行 @font-face 引入 Inter。        */
+  --font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
+    system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono",
+    monospace;
+
+  /* ── 2 · 字号（8 档封顶，相邻至少差 1px）────────────────────────── */
+  --fs-11: 11px; /* 来源行、全大写小标签 */
+  --fs-12: 12px; /* 辅助说明、表格脚注 */
+  --fs-13: 13px; /* 密集列表、表单标签 */
+  --fs-14: 14px; /* 正文默认 */
+  --fs-16: 16px; /* 强调正文、卡片标题 */
+  --fs-20: 20px; /* 区块标题 */
+  --fs-26: 26px; /* 页面标题 */
+  --fs-34: 34px; /* 首屏大标题，整个项目最多一处 */
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-heavy: 800; /* 只给数字和首屏大标题 */
+
+  --lh-tight: 1.15; /* 大标题 */
+  --lh-snug: 1.35; /* 卡片标题 */
+  --lh-base: 1.6; /* 正文 */
+
+  --ls-tight: -0.02em; /* 标题收紧 */
+  --ls-normal: 0;
+  --ls-label: 0.08em; /* 全大写小标签放开 */
+
+  /* ── 3 · 间距（只有 4 的倍数）──────────────────────────────────── */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --sp-20: 80px;
+  --sp-24: 96px;
+
+  /* ── 4 · 形状（四档封顶）───────────────────────────────────────── */
+  --r-card: 24px;
+  --r-panel: 18px;
+  --r-control: 10px;
+  --r-pill: 999px;
+  --hairline: 1px;
+
+  /* ── 5 · 动效（快进快停，不弹跳）────────────────────────────────── */
+  --ease: cubic-bezier(0.25, 1, 0.5, 1); /* 出场、展开 */
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1); /* 颜色、透明度 */
+  --dur-1: 120ms; /* hover */
+  --dur-2: 240ms; /* 展开、切换 */
+  --dur-3: 420ms; /* 面板进出 */
+  --dur-enter: 900ms; /* 首屏入场，封顶 */
+
+  /* ── 6 · 灰阶（明度即层级：l1 最重要 → l7 最弱）────────────────── */
+  --l1: #1c1c1a; /* 最深，主文字 / 主角 / 实心按钮 */
+  --l2: #4a4944; /* hover 态、次级强调 */
+  --l3: #6a6963; /* 次级正文（4.79:1，可做正文） */
+  --l4: #8f8e88; /* 辅助文字（2.86:1，不做正文） */
+  --l5: #b0afa9; /* 禁用文字 */
+  --l6: #c6c5bf; /* 发丝线、辅助刻度 */
+  --l7: #d8d7d1; /* 分隔、轨道底色 */
+  --paper: #f0efeb; /* 纸灰：页面底色 */
+
+  /* ── 7 · 语义色（组件只准用这一层）──────────────────────────────── */
+  --bg: var(--paper);
+  --surface: #f7f6f2; /* 一级面板，比底色亮 4%（1.06:1，靠明度分卡） */
+  --surface-2: #faf9f5; /* 二级卡片 / 悬浮层 */
+  --surface-3: #fffefa; /* 三级：hover / 浮起，只比二级亮一点点 */
+  --sunken: #e7e6e0; /* 凹陷区、进度槽、输入区底色 */
+  --line: #deddd6; /* 唯一允许的发丝线颜色 */
+
+  --text: var(--l1);
+  --text-muted: var(--l3);
+  --text-faint: var(--l4); /* 只用于非文本或禁用态 */
+  --text-disabled: var(--l5);
+
+  --accent: var(--l1); /* 默认即"墨"：没有彩色也成立 */
+  --accent-hover: var(--l2);
+  --accent-on: var(--paper); /* 强调色上的文字 */
+  --accent-text: var(--l1); /* 强调色当文字用时（需 ≥4.5:1） */
+  --accent-soft: rgba(28, 28, 26, 0.06); /* 选中行底色、标签底色 */
+
+  --danger: #9c3410; /* 6.32:1 on --bg，唯一的"重色" */
+  --danger-soft: rgba(156, 52, 16, 0.08);
+  --focus-ring: var(--l1);
+
+  /* ── 8 · 尺寸常量 ──────────────────────────────────────────────── */
+  --sidebar-w: 248px;
+  --topbar-h: 64px;
+  --content-max: 1200px;
+  --row-h: 36px; /* 密集列表行高，舒适区 32~40 */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   彩色预设：只覆盖"强调色 + 底色"，字体/圆角/动效/灰阶一律不动。
+   用法：<html data-palette="porcelain">，同一份交付只能用一套。
+   类目超过 4 个就回 Mono —— 彩色预设的容量就这么大。
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* 青瓷蓝：单色相明度阶。适合有序数据、理性/学术气质、科技感 */
+[data-palette="porcelain"] {
+  --bg: #f7f2eb;
+  --surface: #fdfaf5;
+  --surface-2: #fffdf9;
+  --surface-3: #ffffff;
+  --sunken: #ece5db;
+  --line: #e3dcd0;
+  --text: #081f5c;
+  --text-muted: #3a4a72; /* 6.4:1 on #f7f2eb */
+  --text-faint: #8f97ad;
+  --accent: #334eac;
+  --accent-hover: #081f5c;
+  --accent-on: #ffffff; /* 7.43:1 */
+  --accent-text: #081f5c; /* 13.86:1 */
+  --accent-soft: rgba(51, 78, 172, 0.08);
+  --focus-ring: #334eac;
+  --danger: #8c2f14;
+}
+
+/* 椰林绿：色相=类目（无序，≤4 个）。琥珀 D4A017 只做填充 */
+[data-palette="palm"] {
+  --bg: #f0efeb;
+  --surface: #f7f7f0;
+  --surface-2: #fbfbf5;
+  --surface-3: #ffffff;
+  --sunken: #e6e6dc;
+  --line: #ddded2;
+  --text: #58402e;
+  --text-muted: #6b5340;
+  --text-faint: #a3947f;
+  --accent: #43593b; /* 深绿：主操作、主数据 */
+  --accent-hover: #33452c;
+  --accent-on: #f2f1e6;
+  --accent-text: #43593b; /* 6.68:1 */
+  --accent-soft: rgba(67, 89, 59, 0.08);
+  --hero: #d4a017; /* 琥珀：一张页面只给一个元素 */
+  --hero-on: #1c1c1a; /* 7.18:1 */
+  --focus-ring: #43593b;
+  --danger: #8c3a16;
+}
+
+/* 编辑部红：灰阶承载一切，荧光橙只标一个主角（第二个主角=没有主角） */
+[data-palette="wire"] {
+  --bg: #f0f0ee;
+  --surface: #f7f7f5;
+  --surface-2: #fbfbf9;
+  --surface-3: #ffffff;
+  --sunken: #e6e6e3;
+  --line: #dcdcd7;
+  --text: #1f1e1c;
+  --text-muted: #5c5b56; /* 6.6:1 */
+  --text-faint: #8f8e86;
+  --accent: #f5572f; /* 只做填充/描边，2.93:1 不能当文字 */
+  --accent-hover: #d8431d;
+  --accent-on: #1c1c1a; /* 5.11:1，比白字 3.34:1 安全 */
+  --accent-text: #a83812; /* 5.68:1，橙当文字时必须用这个 */
+  --accent-soft: rgba(245, 87, 47, 0.1);
+  --focus-ring: #1f1e1c;
+  --danger: #9c3410;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   暗色：把纸与墨整体翻转。灰阶反向分配（l1 不再是黑色而是纸色）。
+   只在用户明确要暗色时启用；不要默认暗色。
+   ═══════════════════════════════════════════════════════════════════════ */
+[data-theme="dark"] {
+  --l1: #f0efeb;
+  --l2: #dcdad2;
+  --l3: #c9c7bd;
+  --l4: #8f8e88;
+  --l5: #6a6963;
+  --l6: #4a4944;
+  --l7: #2e2d29;
+  --paper: #1c1c1a;
+
+  --bg: #1c1c1a;
+  --surface: #232320;
+  --surface-2: #2a2a26;
+  --surface-3: #32322d;
+  --sunken: #141412;
+  --line: #33322e;
+
+  --text: #f0efeb; /* 14.83:1 */
+  --text-muted: #c9c7bd; /* 9.3:1 */
+  --text-faint: #8f8e88;
+  --text-disabled: #6a6963;
+
+  --accent: #f0efeb;
+  --accent-hover: #ffffff;
+  --accent-on: #1c1c1a;
+  --accent-text: #f0efeb;
+  --accent-soft: rgba(240, 239, 235, 0.08);
+
+  --danger: #f0866a; /* 暗底上要提亮，9c3410 在 #1c1c1a 上只有 1.9:1 */
+  --danger-soft: rgba(240, 134, 106, 0.12);
+  --focus-ring: #f0efeb;
+}
+
+/* 暗色 + 彩色预设的强调色覆盖（底色仍走上面的暗色）*/
+[data-theme="dark"][data-palette="porcelain"] {
+  --accent: #7096d1;
+  --accent-hover: #bad6eb;
+  --accent-on: #081f5c;
+  --accent-text: #bad6eb;
+  --focus-ring: #7096d1;
+}
+[data-theme="dark"][data-palette="palm"] {
+  --accent: #92a763;
+  --accent-hover: #bad6eb;
+  --accent-on: #28311f;
+  --accent-text: #c8caa8;
+  --hero: #f2d17e;
+  --focus-ring: #92a763;
+}
+[data-theme="dark"][data-palette="wire"] {
+  --accent: #f5572f;
+  --accent-hover: #ff7a58;
+  --accent-on: #1c1c1a;
+  --accent-text: #ff8a6c;
+  --focus-ring: #f0efeb;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   基线：只做"让令牌生效"的必要声明，不做有主张的排版。
+   ═══════════════════════════════════════════════════════════════════════ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-14);
+  line-height: var(--lh-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--text);
+  color: var(--bg);
+}
+
+/* 焦点可见：键盘用户唯一的位置线索，不许删 */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--r-control);
+}
+
+/* 数字等宽：表格、计时器、统计卡必加，否则数字跳动显廉价 */
+.mono-num,
+table,
+time,
+output {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* 全大写小标签（来源行、分区标题） */
+.label {
+  font-size: var(--fs-11);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* 动效降级：所有动画必须在没有动画时也读得懂 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

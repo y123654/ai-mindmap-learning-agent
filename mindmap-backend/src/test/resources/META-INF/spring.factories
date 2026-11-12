@@ -1,0 +1,4 @@
+# 测试专用：所有 Spring 应用上下文默认关闭 Redis SSE 广播（避免测试连接开发机 Redis），
+# 并把三个限流阈值默认压成 0（= 不限流，避免既有 IT 多次调用受限接口被误杀成 429）。
+org.springframework.boot.env.EnvironmentPostProcessor=\
+com.example.aimindmap.integration.TestRedisDisableEnvironmentPostProcessor

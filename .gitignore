@@ -1,0 +1,63 @@
+# ===== 密钥 / 本地配置（绝不提交）=====
+mindmap-backend/config/
+**/config/application-local.yml
+**/config/application-*.yml
+**/.env
+**/*.env
+!**/.env.example
+
+# ===== 构建产物 =====
+**/target/
+**/node_modules/
+**/dist/
+**/build/
+**/.vite/
+**/*.tsbuildinfo
+
+# ===== 运行数据 / 日志 =====
+mindmap-backend/data/
+**/logs/
+**/*.log
+jmeter.log
+*.pid
+*.hprof
+
+# ===== IDE / 操作系统 =====
+.idea/
+**/.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# ===== 个人求职材料（不进公开仓库）=====
+_resume_extract.txt
+简历-*.md
+自我介绍-*.md
+项目口头介绍-*.md
+docs/简历-*.md
+docs/P1-简历与面试口径-*.md
+docs/Python-Agent模拟面试笔记-*.md
+
+# ===== 内部过程归档 / 生成物 =====
+AGENTS.md
+.codex/
+docs/codex-archive/
+docs/jmeter/
+docs/test-output/
+docs/acceptance-*/
+docs/mvn-full-*.log
+docs/*.log
+docs/stage*.txt
+docs/stage*.log
+docs/agent-eval/cache/
+
+# ===== 本地临时目录 / 脚本 =====
+output/
+tmp/
+acl-recovery-*/
+io/
+tools/
+mindmap-backend/start-backend.*
+mindmap-backend/rebuild-vector-index.ps1
+mindmap-frontend/start-frontend.*
+mindmap-frontend/_dsh_write_probe.txt

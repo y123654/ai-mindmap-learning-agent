@@ -1,0 +1,227 @@
+server:
+  port: 8080
+
+# 阶段八-1（报备批准引入 actuator + micrometer-registry-prometheus）：端点最小暴露。
+# 只放开 health 与 prometheus 两个端点，不使用 "*"；env / beans / heapdump / threaddump 等
+# 未暴露端点访问即 404（同时仍受 SecurityConfig 的 anyRequest().authenticated() 保护）。
+# JVM / GC / 线程 / http.server.requests 等指标由 micrometer 自动装配。
+# 本节只有两块内容：端点暴露白名单（endpoints.web.exposure.include）与
+# aimindmap.* 耗时 Timer 的分位直方图开关（metrics.distribution.percentiles-histogram），
+# 未新增 management.server.* / management.endpoint.health.* 等任何其它键。
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - prometheus
+  # 阶段八-1（组长 2026-10-22 选定 10.1 的 A 方案）：给全部 aimindmap.* 耗时 Timer 开启
+  # 服务端分位直方图（percentiles-histogram）。依据：方案 326 行「P95」是阶段八-2 面板硬交付，
+  # 328 行双实例部署下只有服务端直方图能用 histogram_quantile() 跨实例聚合
+  # （客户端预聚合分位数不可加总）；序列增量在本地 Prometheus 2 天保留期约束下可忽略。
+  # 只作用于 aimindmap 前缀（该开关只对 Timer/DistributionSummary 生效，Counter/Gauge 不受影响），
+  # jvm / http.server.requests 等其它 meter 一律不打开，避免序列无谓膨胀。
+  # 键写法两条规范（均由 HistogramDistributionWiringTest 实测锁定，写错会立刻测试失败）：
+  # ① 含点号的 map 键必须用方括号包住并整体加引号，否则 YAML 会拆成多级嵌套键；
+  # ② Spring Boot 3.4 的 PropertiesMeterFilter 只支持「精确名 / 逐级前缀」匹配，
+  #    不支持 * 通配（实测 "[aimindmap.*]" 与 "[*]" 均不生效，Timer 仍渲染为 summary），
+  #    因此这里写前缀 "[aimindmap]"，语义等价于「全部 aimindmap.* 耗时 Timer」。
+  metrics:
+    distribution:
+      percentiles-histogram:
+        "[aimindmap]": true
+
+spring:
+  mvc:
+    async:
+      request-timeout: 180000
+  application:
+    name: aimindmap-backend
+  rabbitmq:
+    host: ${RABBITMQ_HOST:127.0.0.1}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:aimindmap}
+    password: ${RABBITMQ_PASSWORD:aimindmap123}
+    virtual-host: ${RABBITMQ_VIRTUAL_HOST:aimindmap}
+    connection-timeout: 5000ms
+    # 阶段 4-1：correlated publisher confirm（RabbitTaskMessagePublisher 同步等 ack）
+    publisher-confirm-type: correlated
+    listener:
+      simple:
+        # 消费者手动 ACK；默认并发 2 / 最大 8（向量队列容器工厂显式同值，对齐附录 A）
+        acknowledge-mode: manual
+        concurrency: 2
+        max-concurrency: 8
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:123456}
+      database: ${REDIS_DATABASE:2}
+      timeout: 2000ms
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/aimindmap}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD}
+    hikari:
+      # 2026-10-25 遗留⑥：连接池 5→20（方案 A，仅调池大小；PG max_connections 与业务代码均未改）
+      maximum-pool-size: 20
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  ai:
+    model:
+      # Chat 不用 OpenAI starter 的自动装配（DeepSeek 与 DashScope 是两个服务商），
+      # 改由 SpringAiChatConfig 显式定义指向 DeepSeek 的 OpenAiChatModel bean
+      chat: none
+      # 本阶段只用 Embedding；OpenAI starter 默认开启的其余模型家族全部关闭，
+      # 否则它们在缺少连接级 key 时会导致上下文启动失败（后续阶段如需再开启）
+      image: none
+      audio:
+        speech: none
+        transcription: none
+      moderation: none
+    openai:
+      # 连接级配置只服务 Embedding 自动装配：指向阿里云 DashScope 的 OpenAI 兼容地址
+      # Spring AI 会在 base-url 后追加 /v1/embeddings，不能以 /v1 结尾（否则路径重复 404）
+      base-url: https://dashscope.aliyuncs.com/compatible-mode
+      api-key: ${EMBEDDING_API_KEY:}
+      embedding:
+        options:
+          model: text-embedding-v3
+          dimensions: 1024
+
+app:
+  # 思维导图节点预算与折叠（《思维导图节点预算与折叠实施方案-v1.0》§4.1）：
+  # 宽文档（同级列表项多）不再整单失败，超限时把列表项/段落节点折进父节点 summary。
+  # fold-enabled 默认 true，置 false（或 MINDMAP_FOLD_ENABLED=false）恢复旧行为。
+  mindmap:
+    max-new-nodes: ${MINDMAP_MAX_NEW_NODES:200}
+    fold-enabled: ${MINDMAP_FOLD_ENABLED:true}
+    summary-max-chars: ${MINDMAP_FOLD_SUMMARY_MAX_CHARS:500}
+  mq:
+    enabled: ${APP_MQ_ENABLED:true}
+    # 阶段 4-2：OutboxRelay 投递间隔与单行失败上限（附录 A）
+    outbox-fixed-delay-ms: ${APP_MQ_OUTBOX_FIXED_DELAY_MS:1000}
+    outbox-max-attempts: ${APP_MQ_OUTBOX_MAX_ATTEMPTS:5}
+    # 阶段 4-3：MQ 开启时向量 worker 降级为对账扫描的间隔（漏发/消费者崩溃补投，附录 A）
+    requeue-scan-delay-ms: ${APP_MQ_REQUEUE_SCAN_DELAY_MS:60000}
+  cache:
+    redis-enabled: ${APP_CACHE_REDIS_ENABLED:true}
+    key-prefix: ${APP_CACHE_KEY_PREFIX:aimindmap:}
+    chat-recent-ttl-seconds: ${APP_CACHE_CHAT_RECENT_TTL_SECONDS:60}
+  ratelimit:
+    ai-per-min: ${APP_RATELIMIT_AI_PER_MIN:20}
+    pdf-per-min: ${APP_RATELIMIT_PDF_PER_MIN:5}
+    sync-per-min: ${APP_RATELIMIT_SYNC_PER_MIN:10}
+  agent:
+    max-tool-calls: ${AGENT_MAX_TOOL_CALLS:3}
+    # P1-D1（方案 §P1-4）：预算超限默认软降级——返回固定提示文本让模型基于已有结果作答；
+    # 置 false 恢复“第 4 次调用直接中止整轮”的硬中止行为（异常场景的回滚开关）。
+    tool-budget-soft: ${AGENT_TOOL_BUDGET_SOFT:true}
+    # P1-D1：单次工具调用超时（秒）。超时按 AGENT_TOOL_TIMEOUT（retryable）处理，不中止整轮。
+    tool-timeout-seconds: ${AGENT_TOOL_TIMEOUT_SECONDS:10}
+    tool-result-max-chars: ${AGENT_TOOL_RESULT_MAX_CHARS:2500}
+    timeout-seconds: ${AGENT_RUN_TIMEOUT_SECONDS:75}
+    # P1-A（方案 §5 P1-1）：显式编排总开关，默认 false —— 关着时全走旧路径，可一键回滚。
+    # P1-A 只做配置与意图分类器，不接线路由；P1-B 起才按意图分流。
+    runtime:
+      enabled: ${AGENT_RUNTIME_ENABLED:false}
+      router:
+        # 意图分类的“可选小模型”：默认 false，关着时分类器零网络调用，规则判不了的兜底 RETRIEVE。
+        llm-enabled: ${AGENT_ROUTER_LLM_ENABLED:false}
+        # 小模型分类单次超时（毫秒）与输出 token 上限（方案要求 maxTokens <= 50）。
+        llm-timeout-ms: ${AGENT_ROUTER_LLM_TIMEOUT_MS:2000}
+        llm-max-tokens: ${AGENT_ROUTER_LLM_MAX_TOKENS:50}
+    tool-cache:
+      enabled: ${AGENT_TOOL_CACHE_ENABLED:true}
+    # P1-5（方案 §P1-5）：检索质量——原 query + 改写、RRF 融合、每篇最多 N 个 chunk。
+    # 默认 true；置 false 完全走旧路径（1 次向量检索、每篇 1 chunk），用于回滚与 A/B。
+    # 两个上限只约束“多查询路径”，默认值与改造前完全一致（5 / 2）；越界（max-results 1~10、
+    # max-chunks-per-document 1~3）回退默认值并 warn。下一段用它扫 cap 5 vs 8、每篇 1 vs 2。
+    # 本轮只加这三个键，不动 app.qdrant.min-score（阈值校准下一段专门做）。
+    retrieval:
+      multi-query-enabled: ${AGENT_RETRIEVAL_MULTI_QUERY_ENABLED:true}
+      # P1-E2c（所有者 2026-10-28 决定）：LLM 查询改写默认关，只用规则改写（零 LLM 调用、
+      # 延迟与基线同量级）。依据 E2/E2b 两次真实测量：LLM 改写 P50 +780~863ms、召回 +0.0pp。
+      # 置 true 恢复“LLM 优先（2 路改写）、失败/超时降级规则改写”的旧行为。
+      rewrite-llm-enabled: ${AGENT_RETRIEVAL_REWRITE_LLM_ENABLED:false}
+      max-results: ${AGENT_RETRIEVAL_MAX_RESULTS:5}
+      max-chunks-per-document: ${AGENT_RETRIEVAL_MAX_CHUNKS_PER_DOCUMENT:2}
+    # P0-E1：估算成本单价（人民币元 / 千 token）。
+    # 按 2026-10 公开价配置，可改；不是账单——不含缓存折扣/阶梯价/汇率，只用于纵向比较。
+    # completion_tokens 或 prompt_tokens 缺失时 estimated_cost 记 null，不用估算值凑成本。
+    cost:
+      input-per-1k-tokens: ${AGENT_COST_INPUT_PER_1K_TOKENS:0.002}
+      output-per-1k-tokens: ${AGENT_COST_OUTPUT_PER_1K_TOKENS:0.008}
+    memory:
+      dedup-min-score: ${AGENT_MEMORY_DEDUP_MIN_SCORE:0.80}
+    # P1-E3b（方案 §P1-7）：提示注入防护总开关，默认 true。
+    # true  = 证据包成 <evidence id="E1" source="document:1">…</evidence>、正文 & < > 转义、
+    #         命中“疑似指令文本”则标 suspicious=true + 证据前加安全提示行 + 只打 runId/证据号/规则名的 warn、
+    #         回答含系统提示词片段则追加固定提示。
+    # false = 整段回滚：工具输出与 P1-E3b 之前逐字节一致（不包装、不转义、不加提示行、不做泄露检查）。
+    security:
+      evidence-guard-enabled: ${AGENT_SECURITY_EVIDENCE_GUARD_ENABLED:true}
+  jwt:
+    secret: ${JWT_SECRET:aimindmap-local-dev-jwt-secret-please-change-in-production-0123456789}
+  security:
+    # 修订第 44 条：外部资源 ID 混淆盐值；公网部署必须用环境变量 EXTERNAL_ID_SALT 覆盖
+    external-id:
+      salt: ${EXTERNAL_ID_SALT:aimindmap-local-dev-external-id-salt-change-me-2026}
+  ai:
+    provider: ${AI_PROVIDER:deepseek}
+    base-url: ${AI_BASE_URL:https://api.deepseek.com}
+    api-key: ${AI_API_KEY}
+    model: ${AI_MODEL:deepseek-chat}
+    timeout-seconds: ${AI_TIMEOUT_SECONDS:60}
+    max-retries: ${AI_MAX_RETRIES:1}
+    # 阶段二 B：输出封顶值（动态输出预算永远不超过它，短对话仍为此值）
+    max-output-tokens: ${AI_MAX_OUTPUT_TOKENS:2000}
+    # 阶段二 B：真实 token 计量与动态输出预算（cl100k 保守估算，非精确计费）
+    context-window-tokens: ${AI_CONTEXT_WINDOW_TOKENS:65536}
+    max-input-tokens: ${AI_MAX_INPUT_TOKENS:24000}
+    output-reserve-tokens: ${AI_OUTPUT_RESERVE_TOKENS:2048}
+    min-output-tokens: ${AI_MIN_OUTPUT_TOKENS:512}
+    token-estimate-multiplier: ${AI_TOKEN_ESTIMATE_MULTIPLIER:1.10}
+    temperature: ${AI_TEMPERATURE:0.2}
+    json-mode: ${AI_JSON_MODE:true}
+    # @deprecated 知识助手已改用 token 预算（阶段二）；出题/思维导图路径仍暂时读取，下版本删除
+    max-prompt-chars: ${AI_MAX_PROMPT_CHARS:12000}
+  qdrant:
+    host: ${QDRANT_HOST:127.0.0.1}
+    grpc-port: ${QDRANT_GRPC_PORT:6334}
+    use-tls: ${QDRANT_USE_TLS:false}
+    collection: ${QDRANT_COLLECTION:learning_resources_text_embedding_v3_1024}
+    vector-dimension: ${QDRANT_VECTOR_DIMENSION:1024}
+    embedding-model: ${QDRANT_EMBEDDING_MODEL:text-embedding-v3}
+    worker-batch-size: ${QDRANT_WORKER_BATCH_SIZE:10}
+    worker-fixed-delay-ms: ${QDRANT_WORKER_FIXED_DELAY_MS:5000}
+    max-attempts: ${QDRANT_MAX_ATTEMPTS:5}
+    search-top-k: ${QDRANT_SEARCH_TOP_K:8}
+    search-max-results: ${QDRANT_SEARCH_MAX_RESULTS:5}
+    min-score: ${QDRANT_MIN_SCORE:0.35}
+    call-timeout-seconds: ${QDRANT_CALL_TIMEOUT_SECONDS:30}
+  pdf:
+    upload-dir: ${PDF_UPLOAD_DIR:./data/pdf-uploads}
+    max-file-size-mb: ${PDF_MAX_FILE_SIZE_MB:20}
+    max-pages: ${PDF_MAX_PAGES:100}
+    min-chars-per-page: ${PDF_MIN_CHARS_PER_PAGE:100}
+    max-empty-page-ratio: ${PDF_MAX_EMPTY_PAGE_RATIO:0.5}
+  cors:
+    allowed-origins:
+      - http://localhost:5173
+      - http://127.0.0.1:5173
+      - http://localhost:5273
+      - http://127.0.0.1:5273
