@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Background, Controls, ReactFlow, ReactFlowProvider, useReactFlow } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { toPng } from 'html-to-image'
+import { toSvg } from 'html-to-image'
 import type { Edge, Node } from '@xyflow/react'
 import type { MindMapGraph, MindMapNode, ValidatedOperation } from '../../types/mindmap'
 import { layoutGraph, type LayoutResult, type MindMapFlowData } from '../../lib/elkLayout'
-import { downloadDataUrl, sanitizeFileName } from '../../lib/download'
+import { downloadDataUrl, downloadTextFile, sanitizeFileName } from '../../lib/download'
 import { MindMapNodeView, type MindMapFlowNode } from './MindMapNodeView'
 
 const nodeTypes = { mindMap: MindMapNodeView }
@@ -14,7 +14,7 @@ const COLLAPSIBLE_MIN_DEPTH = 0
 // 节点总数超过该阈值时进入紧凑模式：只显示前三级，更深的节点不参与渲染，第三级也不能再新增子节点
 const COMPACT_NODE_THRESHOLD = 100
 const COMPACT_MAX_DEPTH = 3
-// 导出 PNG 时等待完整树布局的最长时间（大文档 ELK 布局可能需要几秒）
+// 导出 SVG / 大纲时等待完整树布局的最长时间（大文档 ELK 布局可能需要几秒）
 const EXPORT_LAYOUT_TIMEOUT_MS = 20000
 
 export interface AnimationState {
@@ -135,6 +135,19 @@ async function waitForNextFrames(): Promise<void> {
   await new Promise((resolve) => requestAnimationFrame(() => resolve(null)))
 }
 
+/** 把导图导出为可重新导入的 Markdown 大纲（只用 label，不带坐标和样式）。 */
+function graphToMarkdown(root: MindMapNode | null): string {
+  if (!root) return ''
+  const lines: string[] = []
+  const walk = (node: MindMapNode, depth: number) => {
+    const label = node.label.replace(/\s+/g, ' ').trim()
+    lines.push(`${'  '.repeat(depth)}- ${label}`)
+    node.children.forEach((child) => walk(child, depth + 1))
+  }
+  walk(root, 0)
+  return `${lines.join('\n')}\n`
+}
+
 function CanvasInner(props: Props) {
   const {
     graph,
@@ -156,7 +169,7 @@ function CanvasInner(props: Props) {
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() =>
     collectDefaultCollapsed(graph.tree)
   )
-  // 导出 PNG 期间为 true：临时展开全部节点、关闭紧凑裁剪并隐藏节点操作按钮
+  // 导出 SVG 期间为 true：临时展开全部节点、关闭紧凑裁剪并隐藏节点操作按钮
   const [exporting, setExporting] = useState(false)
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const { fitView } = useReactFlow()
@@ -188,7 +201,7 @@ function CanvasInner(props: Props) {
   // 紧凑模式按“裁剪前”的完整节点总数判断（例如 248 个节点 -> 触发，只显示前三级）
   const totalNodeCount = useMemo(() => countNodes(displayGraph.tree), [displayGraph])
   const compact = totalNodeCount > COMPACT_NODE_THRESHOLD
-  // 导出时临时放开紧凑模式深度边界，确保 PNG 包含完整导图（仅本次导出，不改数据）
+  // 导出时临时放开紧凑模式深度边界，确保 SVG 包含完整导图（仅本次导出，不改数据）
   const maxDisplayDepth = exporting
     ? Number.POSITIVE_INFINITY
     : compact
@@ -304,10 +317,11 @@ function CanvasInner(props: Props) {
   }, [layout, animation?.jobId])
 
   const interactive = !locked && !animation && !exporting
-  const canExportPng = !!displayGraph.tree && !locked && !animation && !exporting
+  const canExportSvg = !!displayGraph.tree && !locked && !animation && !exporting
+  const canExportOutline = !!displayGraph.tree && !locked && !animation && !exporting
 
-  async function handleExportPng() {
-    if (!displayGraph.tree || !canExportPng) return
+  async function handleExportSvg() {
+    if (!displayGraph.tree || !canExportSvg) return
     const previousCollapsed = collapsedIds
     setExporting(true)
     try {
@@ -356,9 +370,9 @@ function CanvasInner(props: Props) {
         'react-flow__attribution',
         'react-flow__handle'
       ]
-      const dataUrl = await toPng(flowRoot, {
+      // SVG 是矢量格式：文本再长缩放也不会糊，比原来的 PNG 更适合长导图
+      const dataUrl = await toSvg(flowRoot, {
         backgroundColor: '#ffffff',
-        pixelRatio: 2,
         cacheBust: true,
         // 截图中不保留缩放控件、官网署名和连接点
         filter: (node) => {
@@ -366,15 +380,26 @@ function CanvasInner(props: Props) {
           return !exportHiddenClasses.some((className) => node.classList.contains(className))
         }
       })
-      const fileName = `${sanitizeFileName(exportFileName, 'mindmap')}.png`
+      const fileName = `${sanitizeFileName(exportFileName, 'mindmap')}.svg`
       downloadDataUrl(dataUrl, fileName)
     } catch (error) {
-      console.error('导出思维导图 PNG 失败', error)
-      onExportError?.(error instanceof Error ? error.message : '导出 PNG 失败，请重试')
+      console.error('导出思维导图 SVG 失败', error)
+      onExportError?.(error instanceof Error ? error.message : '导出 SVG 失败，请重试')
     } finally {
       // 无论成功失败都恢复用户原来的折叠状态和交互
       setCollapsedIds(previousCollapsed)
       setExporting(false)
+    }
+  }
+
+  function handleExportOutline() {
+    if (!displayGraph.tree || !canExportOutline) return
+    try {
+      const fileName = `${sanitizeFileName(exportFileName, 'mindmap')}-大纲.md`
+      downloadTextFile(fileName, graphToMarkdown(displayGraph.tree))
+    } catch (error) {
+      console.error('导出 Markdown 大纲失败', error)
+      onExportError?.(error instanceof Error ? error.message : '导出大纲失败，请重试')
     }
   }
 
@@ -426,7 +451,8 @@ function CanvasInner(props: Props) {
     return layout.edges.map((edge) => {
       const childNew = newIds.has(edge.target)
       const edgeVisible = animation ? !childNew || revealed.has(edge.target) : true
-      return { ...edge, className: edgeVisible ? 'mindmap-edge' : 'mindmap-edge hidden-edge' }
+      const baseClass = edge.className ?? 'mindmap-edge'
+      return { ...edge, className: edgeVisible ? baseClass : `${baseClass} hidden-edge` }
     })
   }, [layout, revealed, animation, newIds])
 
@@ -445,11 +471,19 @@ function CanvasInner(props: Props) {
             </button>
             <button
               type="button"
-              disabled={!canExportPng}
-              onClick={() => void handleExportPng()}
-              title="临时展开全部节点后导出完整思维导图 PNG 图片"
+              disabled={!canExportSvg}
+              onClick={() => void handleExportSvg()}
+              title="临时展开全部节点后导出矢量 SVG；长文本放大也不会糊"
             >
-              {exporting ? '导出中...' : '导出 PNG'}
+              {exporting ? '导出中...' : '导出 SVG'}
+            </button>
+            <button
+              type="button"
+              disabled={!canExportOutline}
+              onClick={handleExportOutline}
+              title="按当前思维导图导出 Markdown 大纲，可重新导入"
+            >
+              导出大纲
             </button>
             {compact ? (
               <span className="layout-hint">

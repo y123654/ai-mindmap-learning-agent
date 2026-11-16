@@ -114,6 +114,26 @@
   --danger-soft: rgba(156, 52, 16, 0.08);
   --focus-ring: var(--l1);
 
+  /* ── 7.1 · 思维导图分支色（只给节点/连线，不抢主操作色）──────────
+     8 个分支一组，按根节点的子节点顺序循环；浅底 + 深描边，
+     正文仍用 --text，保证彩色底上的可读性。                         */
+  --branch-1: #4f5bd5; /* 靛蓝 */
+  --branch-1-soft: #eef0ff;
+  --branch-2: #1f8a70; /* 青绿 */
+  --branch-2-soft: #e6f5f0;
+  --branch-3: #b7791f; /* 琥珀 */
+  --branch-3-soft: #fbf1e0;
+  --branch-4: #c2416b; /* 玫红 */
+  --branch-4-soft: #fbeaf0;
+  --branch-5: #7c5cbf; /* 紫罗兰 */
+  --branch-5-soft: #f2edfb;
+  --branch-6: #2e6fb7; /* 湖蓝 */
+  --branch-6-soft: #e8f1fa;
+  --branch-7: #4f7a28; /* 草绿 */
+  --branch-7-soft: #eff6e6;
+  --branch-8: #c05621; /* 陶土橙 */
+  --branch-8-soft: #fbeddf;
+
   /* ── 8 · 尺寸常量 ──────────────────────────────────────────────── */
   --sidebar-w: 248px;
   --topbar-h: 64px;

@@ -19,6 +19,9 @@ export function MindMapNodeView({ data }: NodeProps<MindMapFlowNode>) {
     onToggleCollapse
   } = data
   const isRoot = node.id === data.rootId
+  const branchIndex = data.branchIndex
+  const branchAttribute =
+    !isRoot && branchIndex !== undefined && branchIndex >= 0 ? branchIndex : undefined
   const isSuggested = node.status === 'removed_suggested'
   // 紧凑模式（节点总数 > 100）下第三级节点不允许再新增子节点：更深内容不显示
   const canAddChild = data.canAddChild !== false
@@ -35,7 +38,7 @@ export function MindMapNodeView({ data }: NodeProps<MindMapFlowNode>) {
     .join(' ')
 
   return (
-    <div className={classes}>
+    <div className={classes} data-branch={branchAttribute}>
       <Handle type="target" position={Position.Left} />
       {hasHiddenChildren && interactive && (
       <button

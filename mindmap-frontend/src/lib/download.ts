@@ -40,7 +40,7 @@ export function downloadTextFile(
   window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-/** 通过 data URL（如 PNG base64）触发下载。 */
+/** 通过 data URL（如 PNG / SVG base64）触发下载。 */
 export function downloadDataUrl(dataUrl: string, fileName: string): void {
   triggerBrowserDownload(dataUrl, fileName)
 }

@@ -12,6 +12,8 @@ const elk = new ELK({
 export interface MindMapFlowData {
   node: MindMapNode
   rootId: string | null
+  /** 根节点为 -1；一级分支按 0~7 循环，整条分支同色。 */
+  branchIndex?: number
   revealed: boolean
   isUpdated: boolean
   interactive?: boolean
@@ -82,6 +84,7 @@ export async function layoutGraph(
   }
 
   const all = flatten(graph.tree)
+  const branchById = assignBranches(graph.tree)
   const newIds = new Set<string>()
   const updatedIds = new Set<string>()
   for (const op of operations ?? []) {
@@ -129,6 +132,7 @@ export async function layoutGraph(
       data: {
         node,
         rootId: graph.rootId,
+        branchIndex: branchById.get(node.id) ?? -1,
         revealed: revealedIds === null ? true : !isNew || revealedIds.has(node.id),
         isUpdated: updatedIds.has(node.id)
       },
@@ -143,13 +147,11 @@ export async function layoutGraph(
     .slice(1)
     .map((node) => {
       const parentId = findParentId(graph.tree!, node.id)!
-      const edgeNew = newIds.has(node.id)
-      const revealed = revealedIds === null ? true : !edgeNew || revealedIds.has(node.id)
       return {
         id: `e-${parentId}-${node.id}`,
         source: parentId,
         target: node.id,
-        className: revealed ? 'mindmap-edge' : 'mindmap-edge hidden-edge',
+        className: `mindmap-edge branch-${branchById.get(node.id) ?? 0}`,
         animated: false
       }
     })
@@ -164,6 +166,18 @@ function findParentId(root: MindMapNode, id: string): string | null {
     if (found) return found
   }
   return null
+}
+
+/** 根节点为 -1；一级子节点按 0~7 循环取色，后代继承所属一级分支的颜色。 */
+function assignBranches(root: MindMapNode): Map<string, number> {
+  const branchById = new Map<string, number>()
+  branchById.set(root.id, -1)
+  const walk = (node: MindMapNode, branch: number) => {
+    branchById.set(node.id, branch)
+    node.children.forEach((child) => walk(child, branch))
+  }
+  root.children.forEach((child, index) => walk(child, index % 8))
+  return branchById
 }
 
 function buildLayers(root: MindMapNode): string[][] {

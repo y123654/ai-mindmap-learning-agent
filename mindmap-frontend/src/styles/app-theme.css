@@ -659,6 +659,34 @@ textarea::placeholder {
   font-size: var(--fs-13);
 }
 
+/* 分支色：按根节点的第 1~8 个子节点循环，整条分支同色。
+   浅底承担"分区"，深色描边 + 左侧色条承担"识别"；正文仍用 --text。 */
+.mindmap-node[data-branch="0"] { --node-accent: var(--branch-1); --node-soft: var(--branch-1-soft); }
+.mindmap-node[data-branch="1"] { --node-accent: var(--branch-2); --node-soft: var(--branch-2-soft); }
+.mindmap-node[data-branch="2"] { --node-accent: var(--branch-3); --node-soft: var(--branch-3-soft); }
+.mindmap-node[data-branch="3"] { --node-accent: var(--branch-4); --node-soft: var(--branch-4-soft); }
+.mindmap-node[data-branch="4"] { --node-accent: var(--branch-5); --node-soft: var(--branch-5-soft); }
+.mindmap-node[data-branch="5"] { --node-accent: var(--branch-6); --node-soft: var(--branch-6-soft); }
+.mindmap-node[data-branch="6"] { --node-accent: var(--branch-7); --node-soft: var(--branch-7-soft); }
+.mindmap-node[data-branch="7"] { --node-accent: var(--branch-8); --node-soft: var(--branch-8-soft); }
+
+.mindmap-node:not(.is-root) {
+  background: var(--node-soft, var(--surface-2));
+  border-color: var(--node-accent, var(--line));
+  border-width: 1.5px;
+}
+
+.mindmap-node:not(.is-root)::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  bottom: 7px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--node-accent, var(--line));
+}
+
 .mindmap-node-label {
   font-size: var(--fs-13);
   font-weight: var(--fw-semibold);
@@ -699,10 +727,14 @@ textarea::placeholder {
 }
 
 .mindmap-node.is-manual,
-.mindmap-node.is-ai,
+.mindmap-node.is-ai {
+  border-style: dashed;
+  border-color: var(--node-accent, var(--l5));
+}
+
 .mindmap-node.is-suggested {
   border-style: dashed;
-  border-color: var(--l5);
+  border-color: var(--danger);
 }
 
 .mindmap-node.is-updated,
@@ -795,11 +827,22 @@ textarea::placeholder {
 .mindmap-edge {
   stroke: var(--l5);
   stroke-width: 1.5;
+  opacity: 0.75;
 }
+
+.mindmap-edge.branch-0 { stroke: var(--branch-1); }
+.mindmap-edge.branch-1 { stroke: var(--branch-2); }
+.mindmap-edge.branch-2 { stroke: var(--branch-3); }
+.mindmap-edge.branch-3 { stroke: var(--branch-4); }
+.mindmap-edge.branch-4 { stroke: var(--branch-5); }
+.mindmap-edge.branch-5 { stroke: var(--branch-6); }
+.mindmap-edge.branch-6 { stroke: var(--branch-7); }
+.mindmap-edge.branch-7 { stroke: var(--branch-8); }
 
 .mindmap-edge.hidden-edge {
   stroke: var(--line);
   stroke-dasharray: 3 3;
+  opacity: 0.5;
 }
 
 .canvas-toolbar {
