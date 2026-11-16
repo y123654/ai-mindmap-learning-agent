@@ -148,6 +148,64 @@ function graphToMarkdown(root: MindMapNode | null): string {
   return `${lines.join('\n')}\n`
 }
 
+/** Markmap 用的 Markdown：根节点用 H1，其余层级用缩进列表。 */
+function graphToMarkmapMarkdown(root: MindMapNode | null): string {
+  if (!root) return ''
+  const oneLine = (text: string) => text.replace(/\s+/g, ' ').trim()
+  const lines: string[] = [`# ${oneLine(root.label)}`]
+  const walk = (node: MindMapNode, depth: number) => {
+    lines.push(`${'  '.repeat(depth)}- ${oneLine(node.label)}`)
+    node.children.forEach((child) => walk(child, depth + 1))
+  }
+  root.children.forEach((child) => walk(child, 0))
+  return `${lines.join('\n')}\n`
+}
+
+const MARKMAP_CLIENT_URL =
+  'https://cdn.jsdelivr.net/npm/@markmap/page@1.1.1/dist/client.js'
+
+function escapeHtml(text: string): string {
+  return text.replace(/[&<>"]/g, (char) => `&#${char.charCodeAt(0)};`)
+}
+
+/**
+ * 生成一个可双击打开的单文件 Markmap HTML。
+ * 优先把 Markmap 客户端内联，导出文件离线也能看；拉取失败时退回 CDN 引用。
+ */
+async function buildMarkmapHtml(title: string, markdown: string): Promise<string> {
+  const data = JSON.stringify({ markdown, images: {}, toolbar: true }).replace(/</g, '\\u003c')
+  let clientScript = ''
+  try {
+    const response = await fetch(MARKMAP_CLIENT_URL, { mode: 'cors' })
+    if (response.ok) {
+      clientScript = await response.text()
+    }
+  } catch (error) {
+    console.warn('Markmap 客户端内联失败，导出文件将改用 CDN 引用', error)
+  }
+  const scriptTag = clientScript
+    ? `<script>${clientScript.replace(/<\/script/gi, '<\\/script')}</script>`
+    : `<script src="${MARKMAP_CLIENT_URL}"></script>`
+
+  return `<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHtml(title)}</title>
+<style>
+html, body { height: 100%; margin: 0; background: #f7f2eb; }
+markmap-view { display: block; height: 100%; }
+</style>
+</head>
+<body>
+<script type="application/json" id="markmap-data">${data}</script>
+${scriptTag}
+</body>
+</html>
+`
+}
+
 function CanvasInner(props: Props) {
   const {
     graph,
@@ -171,6 +229,8 @@ function CanvasInner(props: Props) {
   )
   // 导出 SVG 期间为 true：临时展开全部节点、关闭紧凑裁剪并隐藏节点操作按钮
   const [exporting, setExporting] = useState(false)
+  // Markmap 导出只生成文件，不需要展开画布，单独一个状态避免影响交互
+  const [markmapExporting, setMarkmapExporting] = useState(false)
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const { fitView } = useReactFlow()
 
@@ -319,6 +379,8 @@ function CanvasInner(props: Props) {
   const interactive = !locked && !animation && !exporting
   const canExportSvg = !!displayGraph.tree && !locked && !animation && !exporting
   const canExportOutline = !!displayGraph.tree && !locked && !animation && !exporting
+  const canExportMarkmap =
+    !!displayGraph.tree && !locked && !animation && !exporting && !markmapExporting
 
   async function handleExportSvg() {
     if (!displayGraph.tree || !canExportSvg) return
@@ -403,6 +465,21 @@ function CanvasInner(props: Props) {
     }
   }
 
+  async function handleExportMarkmap() {
+    if (!displayGraph.tree || !canExportMarkmap) return
+    setMarkmapExporting(true)
+    try {
+      const title = sanitizeFileName(exportFileName, 'mindmap')
+      const html = await buildMarkmapHtml(title, graphToMarkmapMarkdown(displayGraph.tree))
+      downloadTextFile(`${title}-markmap.html`, html, 'text/html;charset=utf-8')
+    } catch (error) {
+      console.error('导出 Markmap HTML 失败', error)
+      onExportError?.(error instanceof Error ? error.message : '导出 Markmap 失败，请重试')
+    } finally {
+      setMarkmapExporting(false)
+    }
+  }
+
   const nodes: Array<Node<MindMapFlowData>> = useMemo(() => {
     if (!layout) return []
     return layout.nodes.map((flowNode) => {
@@ -476,6 +553,14 @@ function CanvasInner(props: Props) {
               title="临时展开全部节点后导出矢量 SVG；长文本放大也不会糊"
             >
               {exporting ? '导出中...' : '导出 SVG'}
+            </button>
+            <button
+              type="button"
+              disabled={!canExportMarkmap}
+              onClick={() => void handleExportMarkmap()}
+              title="导出可缩放、可折叠的 Markmap HTML，适合分享和演示"
+            >
+              {markmapExporting ? '生成中...' : '导出 Markmap'}
             </button>
             <button
               type="button"
