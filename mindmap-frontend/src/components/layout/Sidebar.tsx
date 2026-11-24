@@ -1,6 +1,6 @@
 import type { UserProfile } from '../../types/auth'
 
-export type AppView = 'home' | 'notes' | 'question-records' | 'ai-assistant' | 'settings'
+export type AppView = 'home' | 'notes' | 'question-records' | 'review' | 'ai-assistant' | 'settings'
 
 interface SidebarProps {
   activeView: AppView
@@ -36,6 +36,18 @@ function QuestionIcon() {
       <circle cx="12" cy="12" r="9" />
       <path d="M9.6 9.2c.3-1.3 1.3-2 2.5-2 1.4 0 2.4.9 2.4 2.1 0 1-.5 1.6-1.4 2.1-.8.4-1.1.8-1.1 1.6" />
       <circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+function ReviewIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3" />
+      <path d="M9 3.5h6V6H9z" />
+      <path d="m8.5 12 1.7 1.7L14 10" />
+      <path d="M8.5 17h7" />
     </svg>
   )
 }
@@ -95,6 +107,13 @@ export function Sidebar({ activeView, onNavigate, user }: SidebarProps) {
         >
           <span className="nav-icon"><QuestionIcon /></span>
           题目记录
+        </button>
+        <button
+          className={activeView === 'review' ? 'active' : ''}
+          onClick={() => onNavigate('review')}
+        >
+          <span className="nav-icon"><ReviewIcon /></span>
+          复习测试
         </button>
         <button
           className={activeView === 'ai-assistant' ? 'active' : ''}

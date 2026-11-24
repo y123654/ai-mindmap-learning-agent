@@ -1857,3 +1857,525 @@ button.primary.open-note-btn:hover:not(:disabled) {
     display: none;
   }
 }
+
+/* ── 15 · 复习测试 ─────────────────────────────────────────────────── */
+
+.review-page {
+  max-width: 860px;
+}
+
+.review-loading {
+  padding: var(--sp-16) 0;
+  color: var(--text-muted);
+  font-size: var(--fs-13);
+  text-align: center;
+}
+
+.review-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-8);
+  border: var(--hairline) solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.review-empty-title {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--fs-20);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-tight);
+}
+
+.review-empty-text {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--fs-14);
+  line-height: var(--lh-base);
+}
+
+.review-empty-hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-12);
+  line-height: var(--lh-base);
+}
+
+.review-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--fs-13);
+}
+
+/* 开始页 */
+
+.review-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding: var(--sp-6);
+  border: var(--hairline) solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.review-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.review-facts span {
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-pill);
+  background: var(--sunken);
+  color: var(--text);
+  font-size: var(--fs-12);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.review-rule {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-13);
+  line-height: 1.75;
+}
+
+.review-count {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.review-count-label {
+  color: var(--text-faint);
+  font-size: var(--fs-11);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-label);
+}
+
+.review-count-options {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+
+.review-count-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  height: auto;
+  min-height: 56px;
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--hairline) solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+  color: var(--text);
+  text-align: left;
+}
+
+.review-count-option strong {
+  font-size: var(--fs-14);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-snug);
+}
+
+.review-count-option span {
+  color: var(--text-muted);
+  font-size: var(--fs-11);
+  font-variant-numeric: tabular-nums;
+}
+
+.review-count-option.is-selected,
+.review-count-option.is-selected:hover:not(:disabled) {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--bg);
+}
+
+.review-count-option.is-selected span {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.review-hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-12);
+  line-height: var(--lh-base);
+}
+
+.review-start-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.review-start-btn {
+  min-height: 40px;
+  padding: 0 var(--sp-6);
+}
+
+/* 答题页 */
+
+.review-quiz-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-2);
+}
+
+.review-quiz-kicker {
+  color: var(--text-faint);
+  font-size: var(--fs-11);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-label);
+}
+
+.review-progress-text {
+  color: var(--text-muted);
+  font-size: var(--fs-12);
+  font-variant-numeric: tabular-nums;
+}
+
+.review-progress-track {
+  overflow: hidden;
+  height: 6px;
+  margin-bottom: var(--sp-4);
+  border-radius: var(--r-pill);
+  background: var(--sunken);
+}
+
+.review-progress-fill {
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: var(--text);
+  transition: width var(--dur-2) var(--ease-in-out);
+}
+
+.review-question-card {
+  padding: var(--sp-6);
+  border: var(--hairline) solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.review-question-meta {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--fs-11);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-label);
+}
+
+.review-stem {
+  margin: var(--sp-2) 0 var(--sp-5);
+  color: var(--text);
+  font-size: var(--fs-20);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: 1.45;
+}
+
+.review-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.review-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 44px;
+  height: auto;
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--hairline) solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: var(--fs-13);
+  font-weight: var(--fw-regular);
+  line-height: 1.6;
+  text-align: left;
+}
+
+.review-option.is-selected,
+.review-option.is-selected:hover:not(:disabled) {
+  border-color: var(--text);
+  background: var(--sunken);
+  color: var(--text);
+}
+
+.review-option-key {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: var(--hairline) solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: var(--fs-11);
+  font-weight: var(--fw-semibold);
+  line-height: 1;
+}
+
+.review-option.is-selected .review-option-key {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--bg);
+}
+
+.review-option-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.review-short {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.review-short-input {
+  width: 100%;
+  min-height: 132px;
+  padding: var(--sp-3);
+  border: var(--hairline) solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: var(--fs-13);
+  line-height: 1.75;
+  resize: vertical;
+}
+
+.review-short-input:focus {
+  outline: none;
+  border-color: var(--text);
+}
+
+.review-short-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.review-compare {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border-left: 2px solid var(--text);
+  border-radius: var(--r-control);
+  background: var(--surface-2);
+}
+
+.review-reference-label {
+  color: var(--text-faint);
+  font-size: var(--fs-11);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-label);
+}
+
+.review-reference-text {
+  margin: var(--sp-1) 0 0;
+  color: var(--text);
+  font-size: var(--fs-13);
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+
+.review-self {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.review-self-label {
+  color: var(--text-muted);
+  font-size: var(--fs-12);
+}
+
+.review-self-btn.is-right.is-active,
+.review-self-btn.is-right.is-active:hover:not(:disabled) {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--bg);
+}
+
+.review-self-btn.is-wrong.is-active,
+.review-self-btn.is-wrong.is-active:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: var(--bg);
+}
+
+.review-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-top: var(--sp-5);
+}
+
+.review-actions button {
+  min-height: 38px;
+  padding: 0 var(--sp-5);
+}
+
+.review-actions-right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.review-advance-hint {
+  color: var(--text-faint);
+  font-size: var(--fs-12);
+}
+
+/* 结果页 */
+
+.review-result-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.review-score-card {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: var(--sp-6);
+  border: var(--hairline) solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.review-score-number {
+  color: var(--text);
+  font-size: var(--fs-34);
+  font-weight: var(--fw-heavy);
+  letter-spacing: var(--ls-tight);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.review-score-unit {
+  color: var(--text-muted);
+  font-size: var(--fs-14);
+}
+
+.review-score-meta {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: var(--fs-12);
+  font-variant-numeric: tabular-nums;
+}
+
+.review-result-empty {
+  margin-top: var(--sp-4);
+}
+
+.review-result-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-top: var(--sp-5);
+}
+
+.review-result-item {
+  padding: var(--sp-5);
+  border: var(--hairline) solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+}
+
+.review-result-item.is-wrong {
+  border-color: var(--danger);
+}
+
+.review-result-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.review-result-index {
+  color: var(--text-muted);
+  font-size: var(--fs-12);
+  font-variant-numeric: tabular-nums;
+}
+
+.review-result-mark {
+  font-size: var(--fs-13);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.review-result-mark.is-right {
+  color: var(--text);
+}
+
+.review-result-mark.is-wrong {
+  color: var(--danger);
+}
+
+.review-result-stem {
+  margin: var(--sp-2) 0 var(--sp-3);
+  color: var(--text);
+  font-size: var(--fs-14);
+  font-weight: var(--fw-medium);
+  line-height: 1.65;
+}
+
+.review-result-row {
+  display: flex;
+  gap: var(--sp-3);
+  padding: 2px 0;
+  font-size: var(--fs-13);
+  line-height: 1.7;
+}
+
+.review-result-label {
+  flex-shrink: 0;
+  width: 64px;
+  color: var(--text-faint);
+  font-size: var(--fs-12);
+}
+
+.review-result-value {
+  min-width: 0;
+  color: var(--text);
+  word-break: break-word;
+}
+
+@media (max-width: 720px) {
+  .review-count-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .review-actions {
+    flex-wrap: wrap;
+  }
+
+  .review-actions-right {
+    margin-left: auto;
+  }
+
+  .review-result-actions {
+    flex-wrap: wrap;
+  }
+}

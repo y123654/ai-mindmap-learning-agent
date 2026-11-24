@@ -13,6 +13,9 @@ const NotesPage = lazy(() => import('./pages/NotesPage').then((m) => ({ default:
 const QuestionRecordsPage = lazy(() =>
   import('./pages/QuestionRecordsPage').then((m) => ({ default: m.QuestionRecordsPage }))
 )
+const ReviewTestPage = lazy(() =>
+  import('./pages/ReviewTestPage').then((m) => ({ default: m.ReviewTestPage }))
+)
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 const AiAssistantPage = lazy(() =>
   import('./pages/AiAssistantPage').then((m) => ({ default: m.AiAssistantPage }))
@@ -24,6 +27,7 @@ const VIEW_PATHS: Record<AppView, string> = {
   home: '/index',
   notes: '/notes',
   'question-records': '/questions',
+  review: '/review',
   'ai-assistant': '/ai',
   settings: '/settings'
 }
@@ -237,6 +241,12 @@ export default function App() {
       {activeView === 'question-records' && (
         <Suspense fallback={<ViewLoading />}>
           <QuestionRecordsPage onOpenDocument={(id) => openDocument(id, true)} />
+        </Suspense>
+      )}
+
+      {activeView === 'review' && (
+        <Suspense fallback={<ViewLoading />}>
+          <ReviewTestPage />
         </Suspense>
       )}
 
